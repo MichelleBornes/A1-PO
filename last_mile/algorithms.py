@@ -32,13 +32,21 @@ def reconstruir_caminho(
 
 
 def dijkstra_manual(
-    G: nx.DiGraph, origem: Any, destino: Any, peso: str = "length"
+    G: nx.DiGraph,
+    origem: Any,
+    destino: Any,
+    peso: str = "length",
+    registrar: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Calcula o caminho mínimo com Dijkstra e contabiliza nós finalizados.
 
     Um vértice é considerado explorado quando sai da fila de prioridade com
     seu menor custo confirmado. O destino é contado quando é retirado da fila.
     Pesos negativos não são permitidos.
+
+    O parâmetro opcional ``registrar`` recebe um evento por extração de vértice
+    e por relaxamento bem-sucedido de aresta. Ele serve para explicar, passo a
+    passo, como o custo dos caminhos é atualizado (não afeta o resultado).
     """
     if origem not in G or destino not in G:
         raise nx.NodeNotFound("Origem ou destino não pertence ao grafo.")
@@ -57,6 +65,14 @@ def dijkstra_manual(
 
         finalizados.add(u)
         explorados += 1
+        if registrar is not None:
+            registrar({
+                "evento": "extrai",
+                "algoritmo": "Dijkstra",
+                "no": u,
+                "dist": float(distancia_atual),
+                "fila": len(fila),
+            })
         if u == destino:
             break
 
@@ -71,9 +87,20 @@ def dijkstra_manual(
 
             nova_distancia = distancia_atual + custo_aresta
             if nova_distancia < distancias.get(v, math.inf):
+                antes = distancias.get(v, math.inf)
                 distancias[v] = nova_distancia
                 predecessores[v] = u
                 heapq.heappush(fila, (nova_distancia, next(sequencia), v))
+                if registrar is not None:
+                    registrar({
+                        "evento": "relaxa",
+                        "algoritmo": "Dijkstra",
+                        "de": u,
+                        "para": v,
+                        "peso": custo_aresta,
+                        "antes": float(antes),
+                        "depois": float(nova_distancia),
+                    })
 
     caminho = reconstruir_caminho(predecessores, origem, destino)
     if caminho is None:
@@ -109,14 +136,19 @@ def a_estrela_manual(
     destino: Any,
     peso: str = "length",
     heuristica: Callable[[nx.DiGraph, Any, Any], float] = heuristica_haversine,
+    registrar: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Calcula o caminho mínimo com A* e heurística geográfica admissível.
 
     Para a heurística Haversine, os pesos devem representar comprimentos reais
     em metros e satisfazer h(u) <= custo(u,v) + h(v). Essa condição decorre da
     desigualdade triangular quando cada `length` não é menor que a distância
-    geodésica entre os nós extremos da aresta. Se forem usados pesos artificiais,
+    Haversine entre os nós extremos da aresta. Se forem usados pesos artificiais,
     use uma heurística nula ou outra heurística demonstravelmente admissível.
+
+    O parâmetro opcional ``registrar`` recebe um evento por extração de vértice
+    (com g, h e f) e por relaxamento de aresta, permitindo explicar o cálculo
+    passo a passo sem alterar o resultado.
     """
     if origem not in G or destino not in G:
         raise nx.NodeNotFound("Origem ou destino não pertence ao grafo.")
@@ -130,12 +162,21 @@ def a_estrela_manual(
     fila = [(h_origem, next(sequencia), 0.0, origem)]
 
     while fila:
-        _, _, g_atual, u = heapq.heappop(fila)
+        f_atual, _, g_atual, u = heapq.heappop(fila)
         if u in finalizados or g_atual > g_score.get(u, math.inf):
             continue
 
         finalizados.add(u)
         explorados += 1
+        if registrar is not None:
+            registrar({
+                "evento": "extrai",
+                "algoritmo": "A*",
+                "no": u,
+                "dist": float(g_atual),
+                "f": float(f_atual),
+                "fila": len(fila),
+            })
         if u == destino:
             break
 
@@ -150,6 +191,7 @@ def a_estrela_manual(
 
             tentativa_g = g_atual + custo_aresta
             if tentativa_g < g_score.get(v, math.inf):
+                antes = g_score.get(v, math.inf)
                 g_score[v] = tentativa_g
                 predecessores[v] = u
                 h_v = float(heuristica(G, v, destino))
@@ -159,6 +201,18 @@ def a_estrela_manual(
                     fila,
                     (tentativa_g + h_v, next(sequencia), tentativa_g, v),
                 )
+                if registrar is not None:
+                    registrar({
+                        "evento": "relaxa",
+                        "algoritmo": "A*",
+                        "de": u,
+                        "para": v,
+                        "peso": custo_aresta,
+                        "antes": float(antes),
+                        "depois": float(tentativa_g),
+                        "heuristica": h_v,
+                        "f": float(tentativa_g + h_v),
+                    })
 
     caminho = reconstruir_caminho(predecessores, origem, destino)
     if caminho is None:

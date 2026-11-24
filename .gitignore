@@ -7,8 +7,11 @@ __pycache__/
 # Dados locais, grafos OSM e resultados gerados
 cache/osm_graphs/*
 !cache/osm_graphs/.gitkeep
+cache/*.json
 results/*
 !results/.gitkeep
+data/amazon/*.json
+*.log
 
 # Arquivos do editor/sistema operacional
 .vscode/

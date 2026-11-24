@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -61,7 +63,7 @@ def executar_demo_offline() -> None:
         raise AssertionError("Os algoritmos deveriam encontrar o mesmo custo.")
 
 
-def criar_argumentos() -> argparse.Namespace:
+def construir_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Compara Dijkstra e A* em uma rota do dataset oficial Amazon e na malha OSM."
     )
@@ -76,7 +78,7 @@ def criar_argumentos() -> argparse.Namespace:
     )
     parser.add_argument(
         "--origin-coordinates", nargs=2, type=float, metavar=("LATITUDE", "LONGITUDE"),
-        help="Coordenadas verificadas da estação, se não houver parada Station no registro.",
+        help="Coordenadas verificadas da estação; têm precedência sobre a parada Station e o CSV.",
     )
     parser.add_argument(
         "--station-coordinates-csv", type=Path, default=DEFAULT_STATION_COORDINATES_CSV,
@@ -107,7 +109,49 @@ def criar_argumentos() -> argparse.Namespace:
                         help="Salva mapas sem abrir janelas de visualização.")
     parser.add_argument("--demo", action="store_true",
                         help="Executa um pequeno teste sintético offline; não usa dados Amazon.")
-    return parser.parse_args()
+    parser.add_argument(
+        "--trace", type=int, default=0, metavar="N",
+        help="Mostra os N primeiros passos de cada algoritmo (extrações e relaxamentos); 0 desativa.",
+    )
+    return parser
+
+
+def criar_argumentos() -> argparse.Namespace:
+    return construir_parser().parse_args()
+
+
+def _formatar_metros(valor: float) -> str:
+    """Formata distâncias em metros, usando o símbolo de infinito quando preciso."""
+    if math.isinf(valor):
+        return "infinito"
+    return f"{valor:,.2f} m"
+
+
+def _imprimir_trace(
+    G: nx.DiGraph, origem: Any, destino: Any, limite: int
+) -> None:
+    """Executa cada algoritmo com registro e imprime os primeiros passos."""
+    for funcao, nome in ((dijkstra_manual, "Dijkstra"), (a_estrela_manual, "A*")):
+        eventos: list[dict[str, Any]] = []
+        funcao(G, origem, destino, peso=DEFAULT_WEIGHT, registrar=eventos.append)
+        print(f"\n=== PRIMEIROS PASSOS — {nome} ({len(eventos)} eventos registrados) ===")
+        for evento in eventos[:limite]:
+            if evento["evento"] == "extrai":
+                linha = (
+                    f"  extrai {evento['no']} | g={_formatar_metros(evento['dist'])}"
+                )
+                if "f" in evento:
+                    linha += f" | f={_formatar_metros(evento['f'])}"
+                print(f"{linha} | fila={evento['fila']}")
+            else:
+                print(
+                    f"  relaxa {evento['de']}->{evento['para']} | peso="
+                    f"{_formatar_metros(evento['peso'])} | "
+                    f"{_formatar_metros(evento['antes'])} -> "
+                    f"{_formatar_metros(evento['depois'])}"
+                )
+        if len(eventos) > limite:
+            print(f"  ... ({len(eventos) - limite} eventos omitidos)")
 
 
 def _salvar_metadados_execucao(
@@ -139,6 +183,9 @@ def _salvar_metadados_execucao(
 
 
 def main() -> None:
+    if len(sys.argv) == 1:
+        construir_parser().print_help()
+        return
     args = criar_argumentos()
     if args.demo:
         executar_demo_offline()
@@ -223,6 +270,9 @@ def main() -> None:
     )
     print("\n=== COMPARAÇÃO DOS ALGORITMOS ===")
     print(comparacao.to_string(float_format=lambda valor: f"{valor:,.8f}"))
+
+    if args.trace > 0:
+        _imprimir_trace(G, no_origem, no_destino, args.trace)
 
     csv_path = salvar_comparacao_csv(
         comparacao, RESULTS_DIR / "comparacao_algoritmos_amazon_osm.csv"
