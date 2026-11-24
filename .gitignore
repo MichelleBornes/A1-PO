@@ -1,0 +1,16 @@
+# Ambiente virtual e arquivos Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Dados locais, grafos OSM e resultados gerados
+cache/osm_graphs/*
+!cache/osm_graphs/.gitkeep
+results/*
+!results/.gitkeep
+
+# Arquivos do editor/sistema operacional
+.vscode/
+.DS_Store
+Thumbs.db

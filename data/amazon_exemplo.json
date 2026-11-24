@@ -1,0 +1,23 @@
+{
+  "RouteID_TESTE_001": {
+    "station_code": "STATION_TESTE",
+    "date_YYYY_MM_DD": "2018-08-01",
+    "departure_time_utc": "14:00:00",
+    "executor_capacity_cm3": 4000000,
+    "route_score": "Medium",
+    "stops": {
+      "ST": {
+        "lat": 30.397000,
+        "lng": -97.695000,
+        "type": "Station",
+        "zone_id": "TESTE"
+      },
+      "AA": {
+        "lat": 30.399494,
+        "lng": -97.692166,
+        "type": "Dropoff",
+        "zone_id": "TESTE"
+      }
+    }
+  }
+}
