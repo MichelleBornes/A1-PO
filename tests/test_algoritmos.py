@@ -29,6 +29,32 @@ class TestAlgoritmos(unittest.TestCase):
         self.assertEqual(d["caminho"], ["S", "A", "T"])
         self.assertEqual(a["caminho"], ["S", "A", "T"])
 
+    def test_trace_registra_extracoes_e_relaxamentos(self):
+        G = criar_grafo_teste()
+
+        eventos_d: list[dict] = []
+        d = dijkstra_manual(G, "S", "T", registrar=eventos_d.append)
+        self.assertAlmostEqual(d["distancia_m"], 240.0)
+        extracoes = [e["no"] for e in eventos_d if e["evento"] == "extrai"]
+        self.assertEqual(extracoes, ["S", "A", "B", "T"])
+        relaxamentos = [e for e in eventos_d if e["evento"] == "relaxa"]
+        self.assertTrue(any(
+            e["de"] == "S" and e["para"] == "A" and e["depois"] == 120.0
+            for e in relaxamentos
+        ))
+
+        eventos_a: list[dict] = []
+        a = a_estrela_manual(G, "S", "T", registrar=eventos_a.append)
+        self.assertAlmostEqual(a["distancia_m"], 240.0)
+        extracoes_a = [e["no"] for e in eventos_a if e["evento"] == "extrai"]
+        self.assertEqual(extracoes_a, ["S", "A", "T"])
+        self.assertIn("f", eventos_a[0])
+        relaxamentos_a = [e for e in eventos_a if e["evento"] == "relaxa"]
+        self.assertTrue(any(
+            e["de"] == "A" and e["para"] == "T" and e["f"] == 240.0
+            for e in relaxamentos_a
+        ))
+
     def test_grafo_direcionado_respeita_sentido(self):
         G = nx.DiGraph()
         G.add_node("S", x=0.0, y=0.0)
