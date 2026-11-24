@@ -519,10 +519,3 @@ python -m unittest discover -s tests -v
 - OSMnx — documentação: <https://osmnx.readthedocs.io/>
 
 A base Amazon é disponibilizada sob licença Creative Commons Attribution-NonCommercial 4.0 (CC BY-NC 4.0). Confira as condições da licença antes de redistribuir os dados ou utilizá-los para fins comerciais.
-
-## 17. Entrega e roteiro do vídeo
-
-- **Código:** a entrega é um script Python executável (`main.py`), o que atende à opção ".py" da ficha A2. Se for exigido `.ipynb`, o mesmo código pode ser aberto no Colab ou no VS Code e executado célula a célula.
-- **Vídeo:** 10 a 15 minutos, gravado no Meet/Teams, com **todos os integrantes em câmera** (exigência dos slides da Aula 10 e da ficha A2). O roteiro de apoio é mantido localmente pela equipe, fora do repositório.
-- **Checklist da ficha A2:** identificação do grupo (3 a 4 integrantes); problema, dataset e justificativa (seção 2); algoritmo e justificativa (seções 1.2 e 14); modelagem formal (seção 1.1); funcionamento e forma de cálculo (seção 9.1); código (seção 3); exibição visual (seção 11.1); impacto e decisão (seção 12); duração e participação no vídeo.
-- **Pontuação:** a ficha A2 soma 5,0 pontos no Blackboard; o bônus de até +20% e o multiplicador de 1,2× para caso real dependem dos requisitos adicionais do professor. Confirmar com ele a divergência entre os slides (Etapa 2 = 4,0) e a ficha (Etapa 2 = 3,0).
