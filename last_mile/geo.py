@@ -1,3 +1,4 @@
+"""Funções geográficas e associação das coordenadas aos nós OSM."""
 from __future__ import annotations
 
 import math
@@ -9,6 +10,7 @@ import pandas as pd
 def distancia_haversine_m(
     lat1: float, lon1: float, lat2: float, lon2: float
 ) -> float:
+    """Distância de grande círculo entre duas coordenadas, em metros."""
     raio_terra_m = 6_371_009.0
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     d_phi = math.radians(lat2 - lat1)
@@ -26,6 +28,11 @@ def associar_coordenadas_a_nos(
     origem: dict[str, float],
     destino: dict[str, float],
 ) -> tuple[Any, Any, pd.DataFrame]:
+    """Encontra os nós OSM mais próximos da origem e do destino.
+
+    OSMnx espera X=longitude e Y=latitude. Os afastamentos são informativos:
+    não são somados ao custo da rota sobre a rede viária.
+    """
     import osmnx as ox
 
     try:
